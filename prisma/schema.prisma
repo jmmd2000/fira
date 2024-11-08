@@ -18,7 +18,18 @@ model User {
   profile_picture_url       String?
   created_at                DateTime      @default(now())
   updated_at                DateTime      @updatedAt
-  Ticket Ticket[]
+  Ticket                    Ticket[]
+  Project                   Project[]
+}
+
+model Project {
+  id                        Int           @id @default(autoincrement())
+  name                      String
+  created_at                DateTime      @default(now())
+  updated_at                DateTime      @updatedAt
+  user                      User          @relation(fields: [user_id], references: [id])
+  user_id                   Int
+  tickets                   Ticket[]
 }
 
 model Ticket {
@@ -30,4 +41,6 @@ model Ticket {
   updated_at                DateTime      @updatedAt
   user                      User          @relation(fields: [user_id], references: [id])
   user_id                   Int
+  Project                   Project  @relation(fields: [project_id], references: [id])
+  project_id                Int
 }

@@ -5,13 +5,17 @@ import { api } from "~/utils/api";
 
 import "~/styles/globals.css";
 import { UserProvider } from "~/context/UserContext";
+import Layout from "./layout";
+import { SidebarTrigger } from "~/components/ui/sidebar";
 
 const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <div className={GeistSans.className}>
       <ClerkProvider {...pageProps}>
         <UserProvider>
-          <Component {...pageProps} />
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
         </UserProvider>
       </ClerkProvider>
     </div>

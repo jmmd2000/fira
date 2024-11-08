@@ -3,6 +3,7 @@ import { useUser } from "@clerk/nextjs";
 import { useEffect } from "react";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
+import { useUserContext } from "~/context/UserContext";
 
 export default function Home() {
   // Auth data from Clerk
@@ -13,9 +14,11 @@ export default function Home() {
   const { mutate: createUser, isError: failedCreatingUser } =
     api.user.create.useMutation();
 
+  const { currentUser } = useUserContext();
+
   // Create a user in the database when the user is signed in
   useEffect(() => {
-    if (clerkSignedIn && appSignedIn && user) {
+    if (clerkSignedIn && appSignedIn && user && !currentUser) {
       createUser({
         first_name: user.firstName,
         last_name: user.lastName,
@@ -24,7 +27,7 @@ export default function Home() {
     } else {
       return;
     }
-  }, [createUser, appSignedIn, clerkSignedIn, user]);
+  }, [createUser, appSignedIn, clerkSignedIn, user, currentUser]);
 
   useEffect(() => {
     if (failedCreatingUser) {
@@ -32,14 +35,5 @@ export default function Home() {
     }
   }, [failedCreatingUser]);
 
-  return (
-    <>
-      <SignedOut>
-        <SignInButton forceRedirectUrl={"/?signedIn=true"} />
-      </SignedOut>
-      <SignedIn>
-        <UserButton />
-      </SignedIn>
-    </>
-  );
+  return <></>;
 }

@@ -9,7 +9,7 @@ import { api } from "~/utils/api";
 import { type User } from "@prisma/client";
 
 interface UserContextType {
-  user: User | null;
+  currentUser: User | null;
   isLoading: boolean;
   updateUser: (newUser: User) => void;
 }
@@ -25,12 +25,14 @@ export function useUserContext() {
 }
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [currentUser, setUser] = useState<User | null>(null);
   const { data, isLoading } = api.user.getCurrentUser.useQuery();
 
   useEffect(() => {
     if (!isLoading && data) {
       setUser(data.user);
+    } else if (!isLoading && !data) {
+      setUser(null);
     }
   }, [data, isLoading]);
 
@@ -58,7 +60,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const contextValues: UserContextType = {
-    user,
+    currentUser,
     isLoading,
     updateUser,
   };

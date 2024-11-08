@@ -2,7 +2,13 @@ import React, { type ReactNode } from "react";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "~/components/ui/sheet";
-import { ChevronRightIcon, MenuIcon, Bot } from "lucide-react";
+import {
+  ChevronRightIcon,
+  MenuIcon,
+  Bot,
+  ChevronDown,
+  PlusCircle,
+} from "lucide-react";
 import {
   SignedOut,
   SignInButton,
@@ -18,26 +24,53 @@ import {
   DropdownMenuSeparator,
 } from "~/components/ui/dropdown-menu";
 import { useUserContext } from "~/context/UserContext";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "~/components/ui/sidebar";
+import { api } from "~/utils/api";
+import {
+  DialogHeader,
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "~/components/ui/dialog";
+import { Separator } from "~/components/ui/separator";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <>
-      <Navbar />
-      <main className="flex pt-16">
-        <Sidebar />
-        <div className="flex-grow">{children}</div>
-      </main>
+      <SidebarProvider>
+        <Navbar />
+        <MainSidebar />
+        <div className="flex-grow">
+          <SidebarTrigger className="mt-16" />
+          {children}
+        </div>
+      </SidebarProvider>
     </>
   );
 }
 
 const Navbar = () => {
-  const { user } = useUserContext();
+  const { currentUser } = useUserContext();
   return (
-    <header className="absolute top-0 z-20 flex h-16 w-full items-center justify-between gap-4 border-b bg-white px-4 md:px-6">
+    <header className="absolute top-0 z-20 flex h-16 w-full items-center justify-between gap-16 border-b bg-white px-4 md:px-6">
       <Link href="/" className="flex items-center gap-2" prefetch={false}>
         <Bot className="h-6 w-6" />
-        <span className="text-lg font-semibold">reddit-clone</span>
+        <span className="text-lg font-semibold">jira-clone</span>
       </Link>
       <div className="ml-auto hidden items-center gap-4 lg:flex">
         <SignedOut>
@@ -54,7 +87,7 @@ const Navbar = () => {
             <DropdownMenuTrigger asChild>
               <Avatar className="h-9 w-9">
                 <AvatarImage
-                  src={user?.profile_picture_url ?? undefined}
+                  src={currentUser?.profile_picture_url ?? undefined}
                   alt="avatar"
                 />
                 <AvatarFallback>JD</AvatarFallback>
@@ -154,7 +187,7 @@ const Navbar = () => {
                 <DropdownMenuTrigger asChild>
                   <Avatar className="h-9 w-9">
                     <AvatarImage
-                      src={user?.profile_picture_url ?? undefined}
+                      src={currentUser?.profile_picture_url ?? undefined}
                       alt="avatar"
                     />
                     <AvatarFallback>JD</AvatarFallback>
@@ -205,40 +238,113 @@ const Navbar = () => {
   );
 };
 
-const Sidebar = () => {
+const MainSidebar = () => {
+  const { currentUser } = useUserContext();
+  const { data: projects } = api.project.getAllProjectsForUser.useQuery(
+    currentUser?.id ?? null,
+    { enabled: !!currentUser },
+  );
+  const sidebar = useSidebar();
   return (
-    // <aside className="absolute left-0 z-10 hidden h-full w-64 flex-col gap-4 border-r px-4 py-6 lg:flex">
-    <aside className="hidden h-[calc(100vh-64px)] w-64 flex-col gap-4 border-r px-4 py-6 lg:flex">
-      <nav className="flex flex-col gap-4">
-        <Link
-          href="#"
-          className="flex items-center gap-2 text-lg font-semibold"
-          prefetch={false}
+    <Sidebar collapsible="icon" className="mt-16 h-[calc(100vh-64px)]">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            {sidebar.open ? (
+              <>
+                <NewProjectDialog />
+                <Separator />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton>
+                      Select project
+                      <ChevronDown className="ml-auto" />
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-[--radix-popper-anchor-width]">
+                    {projects?.map((project) => (
+                      <DropdownMenuItem key={project.id}>
+                        <span>{project.name}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : null}
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Project</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <NewProjectDialog />
+              {/* {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <a href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))} */}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
+};
+
+// interface NewProjectDialogProps {}
+
+const NewProjectDialog = () => {
+  const { status, mutate: createProject } = api.project.create.useMutation();
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <SidebarMenuItem>
+          <SidebarMenuButton>
+            <PlusCircle className="h-6 w-6" />
+            <span>New project</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New project</DialogTitle>
+          <DialogDescription>
+            Create a new project to start tracking your tasks
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            createProject("New project");
+          }}
         >
-          Home
-        </Link>
-        <Link
-          href="#"
-          className="flex items-center gap-2 text-lg font-semibold"
-          prefetch={false}
-        >
-          About
-        </Link>
-        <Link
-          href="#"
-          className="flex items-center gap-2 text-lg font-semibold"
-          prefetch={false}
-        >
-          Services
-        </Link>
-        <Link
-          href="#"
-          className="flex items-center gap-2 text-lg font-semibold"
-          prefetch={false}
-        >
-          Contact
-        </Link>
-      </nav>
-    </aside>
+          <div className="grid gap-4">
+            <label htmlFor="project-name" className="text-sm font-medium">
+              Project name
+            </label>
+            <input
+              id="project-name"
+              type="text"
+              className="focus-visible:ring-ring h-9 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus-visible:outline-none"
+              required
+            />
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={status == "pending"}
+            >
+              {status === "pending" ? "Creating..." : "Create project"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
