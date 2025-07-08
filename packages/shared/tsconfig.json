@@ -1,0 +1,4 @@
+{
+  "compilerOptions": { "declaration": true, "outDir": "dist", "rootDir": "src", "composite": true, "moduleResolution": "node", "target": "ES2021", "module": "CommonJS" },
+  "include": ["src"]
+}
