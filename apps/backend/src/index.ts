@@ -1,8 +1,12 @@
 import express from "express";
+import { toNodeHandler } from "better-auth/node";
 import { createHandler } from "graphql-http/lib/use/express";
 import { GraphQLObjectType, GraphQLSchema, GraphQLString } from "graphql";
+import { auth } from "@/src/utils/auth";
 
 export const app = express();
+
+app.all("/api/auth/{*any}", toNodeHandler(auth));
 
 app.use(express.json());
 
