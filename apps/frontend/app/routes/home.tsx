@@ -1,4 +1,5 @@
 import type { Route } from "./+types/home";
+import { authClient } from "@/app/lib/auth-client";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -8,9 +9,12 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
+  const session = authClient.useSession();
+  console.log("Session:", session);
   return (
     <>
       <h1>Home</h1>
+      <p>Welcome {session.data?.user.name}</p>
     </>
   );
 }
